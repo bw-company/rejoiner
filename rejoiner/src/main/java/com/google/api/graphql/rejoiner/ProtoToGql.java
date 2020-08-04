@@ -20,6 +20,7 @@ import static graphql.Scalars.GraphQLString;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 
 import com.google.api.graphql.options.RelayOptionsProto;
+import com.google.api.graphql.options.RequiredOptionsProto;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Converter;
@@ -164,7 +165,7 @@ final class ProtoToGql {
 
   /** Returns a GraphQLOutputType generated from a FieldDescriptor. */
   static GraphQLOutputType convertType(FieldDescriptor fieldDescriptor) {
-    final GraphQLOutputType type;
+    GraphQLOutputType type;
 
     if (fieldDescriptor.getType() == Type.MESSAGE) {
       type = getReference(fieldDescriptor.getMessageType());
@@ -178,6 +179,10 @@ final class ProtoToGql {
 
     if (type == null) {
       throw new RuntimeException("Unknown type: " + fieldDescriptor.getType());
+    }
+
+    if (fieldDescriptor.getOptions().getExtension(RequiredOptionsProto.required).booleanValue()) {
+      type = GraphQLNonNull.nonNull(type);
     }
 
     if (fieldDescriptor.isRepeated()) {
